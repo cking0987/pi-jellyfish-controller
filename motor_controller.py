@@ -6,28 +6,6 @@ from time import sleep
 import json
 import os
 
-# instance-specific GPIO settings
-direction_pin = 20
-pulse_pin = 21
-cw_direction = 0  # Clockwise (Up)
-ccw_direction = 1  # Counter-Clockwise (Down)
-
-# motor parameters
-pulses_per_rotation = 200
-pulse_duration = .001
-
-# starting values for limits, speed, and position
-max_height = 50
-min_height = 0
-natural_speed_up_rpm = 100
-natural_speed_down_rpm = 60
-speed_rpm = 50
-current_height = [0]
-
-# Movement control
-manual_thread = None
-stop_event = threading.Event()
-
 # File to store persistent data
 DATA_FILE = 'motor_data.json'
 
@@ -50,7 +28,32 @@ def save_data():
     }
     with open(DATA_FILE, 'w') as file:
         json.dump(data, file)
-        
+
+# instance-specific GPIO settings
+direction_pin = 20
+pulse_pin = 21
+cw_direction = 0  # Clockwise (Up)
+ccw_direction = 1  # Counter-Clockwise (Down)
+
+# motor parameters
+pulses_per_rotation = 200
+pulse_duration = .001
+
+# starting values for limits, speed, and position
+max_height = 50
+min_height = 0
+natural_speed_up_rpm = 100
+natural_speed_down_rpm = 60
+speed_rpm = 50
+current_height = [0]
+
+# If there is motor data available on disk, load that to update the variables
+load_data()
+
+# Movement control
+manual_thread = None
+stop_event = threading.Event()
+
 # safer way to set up GPIO pins
 def safe_gpio_setup(pin, mode):
     try:
