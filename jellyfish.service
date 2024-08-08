@@ -1,0 +1,13 @@
+[Unit]
+Description=Jellyfish Web Interface Flask App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/home/chuck/pi-jellyfish-controller
+ExecStart=/usr/bin/python3 /home/chuck/pi-jellyfish-controller/web_server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
