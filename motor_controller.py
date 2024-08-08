@@ -5,6 +5,11 @@ import threading
 from time import sleep
 import json
 import os
+import logging
+
+# Setup logging
+logging.basicConfig(filename='motor_controller.log', level=logging.DEBUG, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # File to store persistent data
 DATA_FILE = 'motor_data.json'
@@ -13,11 +18,15 @@ DATA_FILE = 'motor_data.json'
 def load_data():
     global current_height, max_height, min_height
     if os.path.exists(DATA_FILE):
+        logging.debug("Loading data from %s", DATA_FILE)
         with open(DATA_FILE, 'r') as file:
             data = json.load(file)
             current_height[0] = data.get('current_height', 0)
             max_height = data.get('max_height', 50)
             min_height = data.get('min_height', 0)
+        logging.debug("Data loaded: %s", data)
+    else:
+        logging.debug("%s does not exist. Using default values.", DATA_FILE)
 
 # Save persistent data
 def save_data():
@@ -26,6 +35,7 @@ def save_data():
         'max_height': max_height,
         'min_height': min_height
     }
+    logging.debug("Saving data to %s: %s", DATA_FILE, data)
     with open(DATA_FILE, 'w') as file:
         json.dump(data, file)
 
@@ -92,6 +102,9 @@ def move_motor(direction, speed_rpm, ignore_limits=False):
         if not ignore_limits and (current_height[0] >= max_height or current_height[0] <= min_height):
             stop_event.set()  # Stop the motor if limits are reached
 
+        # Save data after each movement
+        save_data()
+
 
 def manual_up(speed_rpm, ignore_limits):
     global manual_thread
@@ -134,7 +147,7 @@ def stop():
         manual_thread.join()
 
 def cleanup():
-    save_data() # save all current data to disk on cleanup
+    logging.debug("Running cleanup")
     GPIO.cleanup()
 
 atexit.register(cleanup)
