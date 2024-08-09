@@ -11,7 +11,7 @@ sudo pip3 install flask --break-system-packages
 ## Set up git
 
 ```sh
-sudo apt-install git
+sudo apt install git
 ssh-keygen -t ed25519 -C "cking0987@gmail.com"
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519

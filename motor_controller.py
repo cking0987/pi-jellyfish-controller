@@ -8,7 +8,7 @@ import os
 import logging
 
 # Setup logging
-logging.basicConfig(filename='motor_controller.log', level=logging.DEBUG, 
+logging.basicConfig(filename='log.log', level=logging.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # File to store persistent data
@@ -69,7 +69,7 @@ def safe_gpio_setup(pin, mode):
     try:
         GPIO.setup(pin, mode)
     except RuntimeError as e:
-        print(f"Warning: {e} - Attempting to continue")
+        logging.error(f"Warning: {e} - Attempting to continue")
         GPIO.cleanup()  # Attempt a cleanup
         GPIO.setup(pin, mode)  # Try to setup again after cleanup
 
