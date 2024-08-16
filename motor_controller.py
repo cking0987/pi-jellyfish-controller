@@ -87,6 +87,9 @@ def stop_swim():
 # Main section
 if __name__ == "__main__":
     try:
-        start_swim()
+        if swim_config.get('swim_on_boot', False):
+            start_swim()
+        else:
+            print("Swim on boot is disabled.")
     except KeyboardInterrupt:
         stop_swim()

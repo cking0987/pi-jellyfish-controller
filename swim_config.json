@@ -7,5 +7,6 @@
 	"speed_down_manual": 500,
 	"distance_up_swim": 5,
 	"distance_down_swim_min": 1,
-	"distance_down_swim_max": 10
+	"distance_down_swim_max": 10,
+	"swim_on_boot": false
 }
