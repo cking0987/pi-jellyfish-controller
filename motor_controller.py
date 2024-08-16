@@ -1,6 +1,7 @@
 import json
 from time import sleep
 import RPi.GPIO as gpio
+import random
 
 # Load motor parameters from motor_config.json
 with open('motor_config.json', 'r') as f:
@@ -57,7 +58,8 @@ def set_limit(option, value):
 
 def start_swim():
     move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
-    move(motor_config['ccw_direction'], swim_config['distance_down_swim_max'], swim_config['speed_down_swim'])
+    random_distance = random.randomint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
+    move(motor_config['ccw_direction'], random_distance, swim_config['speed_down_swim'])
 
 def stop_swim():
     gpio.cleanup()
