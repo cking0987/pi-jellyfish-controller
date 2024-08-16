@@ -78,6 +78,7 @@ def set_limit(option, value):
 def start_swim():
     print("Starting swim")
     try:
+        gpio.setmode(gpio.BCM)
         while True:
             # Check if the next up movement would exceed the upper limit
             if current_state['current_height'] + swim_config['distance_up_swim'] <= swim_config['limit_height_upper']:
