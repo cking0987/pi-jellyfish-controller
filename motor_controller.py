@@ -81,7 +81,7 @@ def start_swim():
         while True:
             # Check if the next up movement would exceed the upper limit
             if current_state['current_height'] + swim_config['distance_up_swim'] <= swim_config['limit_height_upper']:
-                move(motor_config['motor_direction_up'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+                move("up", swim_config['distance_up_swim'], swim_config['speed_up_swim'])
             else:
                 print("Skipping up movement due to upper limit")
 
@@ -89,7 +89,7 @@ def start_swim():
             # Check if the next down movement would exceed the lower limit
             if current_state['current_height'] - random_distance >= swim_config['limit_height_lower']:
                 print(f"Random down distance: {random_distance}")
-                move(motor_config['motor_direction_down'], random_distance, swim_config['speed_down_swim'])
+                move("down", random_distance, swim_config['speed_down_swim'])
             else:
                 print("Skipping down movement due to lower limit")
     except KeyboardInterrupt:
