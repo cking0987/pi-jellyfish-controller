@@ -1,7 +1,10 @@
 import json
-from time import sleep
-import RPi.GPIO as gpio
 import random
+import RPi.GPIO as gpio
+from time import sleep
+
+# Disable GPIO warnings
+gpio.setwarnings(False)
 
 # Load motor parameters from motor_config.json
 with open('motor_config.json', 'r') as f:
@@ -30,6 +33,7 @@ def save_current_state():
 
 # Motor control functions
 def move(direction, distance, speed, respect_limits=True):
+    print(f"Moving {direction} for {distance} units at speed {speed}")
     if respect_limits:
         if direction == motor_config['cw_direction'] and current_state['current_height'] + distance > swim_config['limit_height_upper']:
             distance = swim_config['limit_height_upper'] - current_state['current_height']
@@ -39,9 +43,9 @@ def move(direction, distance, speed, respect_limits=True):
     gpio.output(motor_config['direction_pin'], direction)
     for _ in range(distance * motor_config['pulses_per_rotation']):
         gpio.output(motor_config['pulse_pin'], gpio.HIGH)
-        sleep(speed)
+        sleep(1 / speed)  # Invert the relationship between speed and delay
         gpio.output(motor_config['pulse_pin'], gpio.LOW)
-        sleep(speed)
+        sleep(1 / speed)  # Invert the relationship between speed and delay
     
     # Update current height and save state
     if direction == motor_config['cw_direction']:
@@ -57,15 +61,18 @@ def set_limit(option, value):
             json.dump(swim_config, f)
 
 def start_swim():
+    print("Starting swim")
     move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
-    random_distance = random.randomint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
+    random_distance = random.randint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
+    print(f"Random down distance: {random_distance}")
     move(motor_config['ccw_direction'], random_distance, swim_config['speed_down_swim'])
 
 def stop_swim():
+    print("Stopping swim and cleaning up GPIO")
     gpio.cleanup()
 
-# Example usage
-if __name__ == '__main__':
+# Main section
+if __name__ == "__main__":
     try:
         start_swim()
     except KeyboardInterrupt:
