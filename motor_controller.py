@@ -31,27 +31,42 @@ def save_current_state():
     with open('current_state.json', 'w') as f:
         json.dump(current_state, f)
 
-# Motor control functions
 def move(direction, distance, speed, respect_limits=True):
+    if direction == "up":
+        direction_value = motor_config['motor_direction_up']
+    elif direction == "down":
+        direction_value = motor_config['motor_direction_down']
+    else:
+        raise ValueError("Invalid direction value. Use 'up' or 'down'.")
+    # Print the movement details
     print(f"Moving {direction} for {distance} units at speed {speed}")
+    
+    # Check if movement should respect limits
     if respect_limits:
-        if direction == motor_config['motor_direction_up'] and current_state['current_height'] + distance > swim_config['limit_height_upper']:
+        # Adjust distance if moving up and exceeding upper limit
+        if direction == "up" and current_state['current_height'] + distance > swim_config['limit_height_upper']:
             distance = swim_config['limit_height_upper'] - current_state['current_height']
-        elif direction == motor_config['motor_direction_down'] and current_state['current_height'] - distance < swim_config['limit_height_lower']:
+        # Adjust distance if moving down and exceeding lower limit
+        elif direction == "down" and current_state['current_height'] - distance < swim_config['limit_height_lower']:
             distance = current_state['current_height'] - swim_config['limit_height_lower']
     
-    gpio.output(motor_config['direction_pin'], direction)
-    for _ in range(distance * motor_config['pulses_per_rotation']):
-        gpio.output(motor_config['pulse_pin'], gpio.HIGH)
-        sleep(1 / speed)  # Invert the relationship between speed and delay
-        gpio.output(motor_config['pulse_pin'], gpio.LOW)
-        sleep(1 / speed)  # Invert the relationship between speed and delay
+    # Set the motor direction
+    gpio.output(motor_config['direction_pin'], direction_value)
     
-    # Update current height and save state
-    if direction == motor_config['motor_direction_up']:
+    # Generate pulses to move the motor
+    for _ in range(distance * motor_config['pulses_per_rotation']):
+        gpio.output(motor_config['pulse_pin'], gpio.HIGH)  # Set pulse pin high
+        sleep(1 / speed)  # Wait for the duration inversely proportional to speed
+        gpio.output(motor_config['pulse_pin'], gpio.LOW)  # Set pulse pin low
+        sleep(1 / speed)  # Wait again for the duration inversely proportional to speed
+    
+    # Update the current height based on the direction of movement
+    if direction == "up":
         current_state['current_height'] += distance
     else:
         current_state['current_height'] -= distance
+    
+    # Save the updated current state to a file
     save_current_state()
 
 def set_limit(option, value):
@@ -85,11 +100,11 @@ def stop_swim():
     gpio.cleanup()
 
 # Main section
-if __name__ == "__main__":
-    try:
-        if swim_config.get('swim_on_boot', False):
-            start_swim()
-        else:
-            print("Swim on boot is disabled.")
-    except KeyboardInterrupt:
-        stop_swim()
+#if __name__ == "__main__":
+#    try:
+#        if swim_config.get('swim_on_boot', False):
+#            start_swim()
+#        else:
+#            print("Swim on boot is disabled.")
+#    except KeyboardInterrupt:
+#        stop_swim()
