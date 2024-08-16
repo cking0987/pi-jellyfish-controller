@@ -10,18 +10,30 @@ with open('motor_config.json', 'r') as f:
 with open('swim_config.json', 'r') as f:
     swim_config = json.load(f)
 
+# Load current state from current_state.json
+try:
+    with open('current_state.json', 'r') as f:
+        current_state = json.load(f)
+except FileNotFoundError:
+    current_state = {'current_height': 0}
+
 # Setup GPIO
 gpio.setmode(gpio.BCM)
 gpio.setup(motor_config['direction_pin'], gpio.OUT)
 gpio.setup(motor_config['pulse_pin'], gpio.OUT)
 
+# Function to save current state
+def save_current_state():
+    with open('current_state.json', 'w') as f:
+        json.dump(current_state, f)
+
 # Motor control functions
 def move(direction, distance, speed, respect_limits=True):
     if respect_limits:
-        if direction == motor_config['cw_direction'] and distance > swim_config['limit_height_upper']:
-            distance = swim_config['limit_height_upper']
-        elif direction == motor_config['ccw_direction'] and distance < swim_config['limit_height_lower']:
-            distance = swim_config['limit_height_lower']
+        if direction == motor_config['cw_direction'] and current_state['current_height'] + distance > swim_config['limit_height_upper']:
+            distance = swim_config['limit_height_upper'] - current_state['current_height']
+        elif direction == motor_config['ccw_direction'] and current_state['current_height'] - distance < swim_config['limit_height_lower']:
+            distance = current_state['current_height'] - swim_config['limit_height_lower']
     
     gpio.output(motor_config['direction_pin'], direction)
     for _ in range(distance * motor_config['pulses_per_rotation']):
@@ -29,6 +41,13 @@ def move(direction, distance, speed, respect_limits=True):
         sleep(speed)
         gpio.output(motor_config['pulse_pin'], gpio.LOW)
         sleep(speed)
+    
+    # Update current height and save state
+    if direction == motor_config['cw_direction']:
+        current_state['current_height'] += distance
+    else:
+        current_state['current_height'] -= distance
+    save_current_state()
 
 def set_limit(option, value):
     if option in swim_config:
