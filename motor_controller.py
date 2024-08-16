@@ -35,9 +35,9 @@ def save_current_state():
 def move(direction, distance, speed, respect_limits=True):
     print(f"Moving {direction} for {distance} units at speed {speed}")
     if respect_limits:
-        if direction == motor_config['cw_direction'] and current_state['current_height'] + distance > swim_config['limit_height_upper']:
+        if direction == motor_config['motor_direction_up'] and current_state['current_height'] + distance > swim_config['limit_height_upper']:
             distance = swim_config['limit_height_upper'] - current_state['current_height']
-        elif direction == motor_config['ccw_direction'] and current_state['current_height'] - distance < swim_config['limit_height_lower']:
+        elif direction == motor_config['motor_direction_down'] and current_state['current_height'] - distance < swim_config['limit_height_lower']:
             distance = current_state['current_height'] - swim_config['limit_height_lower']
     
     gpio.output(motor_config['direction_pin'], direction)
@@ -48,7 +48,7 @@ def move(direction, distance, speed, respect_limits=True):
         sleep(1 / speed)  # Invert the relationship between speed and delay
     
     # Update current height and save state
-    if direction == motor_config['cw_direction']:
+    if direction == motor_config['motor_direction_up']:
         current_state['current_height'] += distance
     else:
         current_state['current_height'] -= distance
@@ -66,7 +66,7 @@ def start_swim():
         while True:
             # Check if the next up movement would exceed the upper limit
             if current_state['current_height'] + swim_config['distance_up_swim'] <= swim_config['limit_height_upper']:
-                move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+                move(motor_config['motor_direction_up'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
             else:
                 print("Skipping up movement due to upper limit")
 
@@ -74,7 +74,7 @@ def start_swim():
             # Check if the next down movement would exceed the lower limit
             if current_state['current_height'] - random_distance >= swim_config['limit_height_lower']:
                 print(f"Random down distance: {random_distance}")
-                move(motor_config['ccw_direction'], random_distance, swim_config['speed_down_swim'])
+                move(motor_config['motor_direction_down'], random_distance, swim_config['speed_down_swim'])
             else:
                 print("Skipping down movement due to lower limit")
     except KeyboardInterrupt:

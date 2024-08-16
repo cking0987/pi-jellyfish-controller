@@ -1,8 +1,8 @@
 {
 	"direction_pin": 23,
 	"pulse_pin": 24,
-	"cw_direction": 0,
-	"ccw_direction": 1,
+	"motor_direction_up": 0,
+	"motor_direction_down": 1,
 	"pulses_per_rotation": 200,
 	"pulse_duration": 0.001
 }
