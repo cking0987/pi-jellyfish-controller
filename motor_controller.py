@@ -1,153 +1,51 @@
-# motor_controller.py
-import RPi.GPIO as GPIO
-import atexit
-import threading
-from time import sleep
 import json
-import os
-import logging
+from time import sleep
+import RPi.GPIO as gpio
 
-# Setup logging
-logging.basicConfig(filename='log.log', level=logging.DEBUG, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+# Load motor parameters from motor_config.json
+with open('motor_config.json', 'r') as f:
+    motor_config = json.load(f)
 
-# File to store persistent data
-DATA_FILE = 'motor_data.json'
+# Load swim parameters from swim_config.json
+with open('swim_config.json', 'r') as f:
+    swim_config = json.load(f)
 
-# Load persistent data
-def load_data():
-    global current_height, max_height, min_height
-    if os.path.exists(DATA_FILE):
-        logging.debug("Loading data from %s", DATA_FILE)
-        with open(DATA_FILE, 'r') as file:
-            data = json.load(file)
-            current_height[0] = data.get('current_height', 0)
-            max_height = data.get('max_height', 50)
-            min_height = data.get('min_height', 0)
-        logging.debug("Data loaded: %s", data)
-    else:
-        logging.debug("%s does not exist. Using default values.", DATA_FILE)
+# Setup GPIO
+gpio.setmode(gpio.BCM)
+gpio.setup(motor_config['direction_pin'], gpio.OUT)
+gpio.setup(motor_config['pulse_pin'], gpio.OUT)
 
-# Save persistent data
-def save_data():
-    data = {
-        'current_height': current_height[0],
-        'max_height': max_height,
-        'min_height': min_height
-    }
-    logging.debug("Saving data to %s: %s", DATA_FILE, data)
-    with open(DATA_FILE, 'w') as file:
-        json.dump(data, file)
+# Motor control functions
+def move(direction, distance, speed, respect_limits=True):
+    if respect_limits:
+        if direction == motor_config['cw_direction'] and distance > swim_config['limit_height_upper']:
+            distance = swim_config['limit_height_upper']
+        elif direction == motor_config['ccw_direction'] and distance < swim_config['limit_height_lower']:
+            distance = swim_config['limit_height_lower']
+    
+    gpio.output(motor_config['direction_pin'], direction)
+    for _ in range(distance * motor_config['pulses_per_rotation']):
+        gpio.output(motor_config['pulse_pin'], gpio.HIGH)
+        sleep(speed)
+        gpio.output(motor_config['pulse_pin'], gpio.LOW)
+        sleep(speed)
 
-# instance-specific GPIO settings
-direction_pin = 20
-pulse_pin = 21
-cw_direction = 0  # Clockwise (Up)
-ccw_direction = 1  # Counter-Clockwise (Down)
+def set_limit(option, value):
+    if option in swim_config:
+        swim_config[option] = value
+        with open('swim_config.json', 'w') as f:
+            json.dump(swim_config, f)
 
-# motor parameters
-pulses_per_rotation = 200
-pulse_duration = .001
+def start_swim():
+    move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+    move(motor_config['ccw_direction'], swim_config['distance_down_swim_max'], swim_config['speed_down_swim'])
 
-# starting values for limits, speed, and position
-max_height = 50
-min_height = 0
-natural_speed_up_rpm = 100
-natural_speed_down_rpm = 60
-speed_rpm = 50
-current_height = [0]
+def stop_swim():
+    gpio.cleanup()
 
-# If there is motor data available on disk, load that to update the variables
-load_data()
-
-# Movement control
-manual_thread = None
-stop_event = threading.Event()
-
-# safer way to set up GPIO pins
-def safe_gpio_setup(pin, mode):
+# Example usage
+if __name__ == '__main__':
     try:
-        GPIO.setup(pin, mode)
-    except RuntimeError as e:
-        logging.error(f"Warning: {e} - Attempting to continue")
-        GPIO.cleanup()  # Attempt a cleanup
-        GPIO.setup(pin, mode)  # Try to setup again after cleanup
-
-# Initialize GPIO
-GPIO.setmode(GPIO.BCM)
-safe_gpio_setup(direction_pin, GPIO.OUT)
-safe_gpio_setup(pulse_pin, GPIO.OUT)
-
-def move_motor(direction, speed_rpm, ignore_limits=False):
-    global current_height
-    pulse_gap = (60 / (speed_rpm * pulses_per_rotation)) - pulse_duration
-
-    GPIO.output(direction_pin, direction)
-    while not stop_event.is_set():
-        for _ in range(pulses_per_rotation):  # Complete one full rotation
-            if stop_event.is_set():
-                break
-            GPIO.output(pulse_pin, GPIO.HIGH)
-            sleep(pulse_duration)
-            GPIO.output(pulse_pin, GPIO.LOW)
-            sleep(pulse_gap)
-
-        # Update current_height based on direction
-        if direction == cw_direction:
-            current_height[0] += 1  # Increase by one full rotation
-        else:
-            current_height[0] -= 1  # Decrease by one full rotation
-
-        # Stop motor at limits
-        if not ignore_limits and (current_height[0] >= max_height or current_height[0] <= min_height):
-            stop_event.set()  # Stop the motor if limits are reached
-
-        # Save data after each movement
-        save_data()
-
-
-def manual_up(speed_rpm, ignore_limits):
-    global manual_thread
-    stop_event.clear()  # Clear stop event in case it was set
-    if manual_thread and manual_thread.is_alive():
-        return  # Return if a movement is already in progress
-    manual_thread = threading.Thread(target=move_motor, args=(cw_direction, speed_rpm, ignore_limits))
-    manual_thread.start()
-
-def manual_down(speed_rpm, ignore_limits):
-    global manual_thread
-    stop_event.clear()
-    if manual_thread and manual_thread.is_alive():
-        return
-    manual_thread = threading.Thread(target=move_motor, args=(ccw_direction, speed_rpm, ignore_limits))
-    manual_thread.start()
-
-def set_upper_limit():
-    global max_height, current_height
-    max_height = current_height[0]
-    save_data() # save updated values to disk
-
-def set_lower_limit():
-    global min_height, current_height
-    min_height = current_height[0]
-    save_data() # save updated values to disk
-
-def get_motor_status():
-    return {
-        "minHeight": min_height,
-        "maxHeight": max_height,
-        "naturalSpeedUp": natural_speed_up_rpm,
-        "naturalSpeedDown": natural_speed_down_rpm,
-        "currentHeight": current_height[0],
-    }
-
-def stop():
-    stop_event.set()
-    if manual_thread:
-        manual_thread.join()
-
-def cleanup():
-    logging.debug("Running cleanup")
-    GPIO.cleanup()
-
-atexit.register(cleanup)
+        start_swim()
+    except KeyboardInterrupt:
+        stop_swim()

@@ -1,0 +1,11 @@
+{
+	"limit_height_upper": 100,
+	"limit_height_lower": 0,
+	"speed_up_swim": 0.002,
+	"speed_up_manual": 0.001,
+	"speed_down_swim": 0.002,
+	"speed_down_manual": 0.001,
+	"distance_up_swim": 50,
+	"distance_down_swim_min": 10,
+	"distance_down_swim_max": 50
+}
