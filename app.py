@@ -36,7 +36,7 @@ def set_config():
 @app.route('/move', methods=['POST'])
 def move_route():
     data = request.json
-    move(data['direction'], data['distance'], data['speed'], data['respect_limits'])
+    move(data['direction'], int(data['distance']), int(data['speed']), data['respect_limits'])
     return jsonify(success=True)
 
 if __name__ == '__main__':

@@ -23,34 +23,42 @@ except FileNotFoundError:
     with open('current_state.json', 'w') as f:
         json.dump(current_state, f)
 
-# Setup GPIO
-gpio.setmode(gpio.BCM)
-gpio.setup(motor_config['direction_pin'], gpio.OUT)
-gpio.setup(motor_config['pulse_pin'], gpio.OUT)
-
 # Function to save current state
 def save_current_state():
     with open('current_state.json', 'w') as f:
         json.dump(current_state, f)
 
 def move(direction, distance, speed, respect_limits=True):
+
+    # Setup GPIO
+    gpio.setmode(gpio.BCM)
+    gpio.setup(motor_config['direction_pin'], gpio.OUT)
+    gpio.setup(motor_config['pulse_pin'], gpio.OUT)
+    
+    # convert human-readable strings to GPIO values
     if direction == "up":
         direction_value = motor_config['motor_direction_up']
     elif direction == "down":
         direction_value = motor_config['motor_direction_down']
     else:
         raise ValueError("Invalid direction value. Use 'up' or 'down'.")
+    
+    # prepare values from disk storage for use
+    height = int(current_state['current_height'])
+    max = int(swim_config['limit_height_upper'])
+    min = int(swim_config['limit_height_lower'])
+
     # Print the movement details
-    print(f"Moving {direction} for {distance} units at speed {speed}")
+    print(f"Moving {direction} (type: {type(direction)}) for {distance} units (type: {type(distance)}) at speed {speed} (type: {type(speed)})")
     
     # Check if movement should respect limits
     if respect_limits:
         # Adjust distance if moving up and exceeding upper limit
-        if direction == "up" and current_state['current_height'] + distance > swim_config['limit_height_upper']:
-            distance = swim_config['limit_height_upper'] - current_state['current_height']
+        if direction == "up" and height + distance > max:
+            distance = max - height
         # Adjust distance if moving down and exceeding lower limit
-        elif direction == "down" and current_state['current_height'] - distance < swim_config['limit_height_lower']:
-            distance = current_state['current_height'] - swim_config['limit_height_lower']
+        elif direction == "down" and height - distance < min:
+            distance = height - min
     
     # Set the motor direction
     gpio.output(motor_config['direction_pin'], direction_value)
@@ -82,17 +90,27 @@ def start_swim():
     try:
         gpio.setmode(gpio.BCM)
         while True:
+            # Convert current_height into int
+            current_height = int(current_state['current_height'])
+            # Convert swim_config values to integers
+            distance_up_swim = int(swim_config['distance_up_swim'])
+            speed_up_swim = int(swim_config['speed_up_swim'])
+            distance_down_swim_min = int(swim_config['distance_down_swim_min'])
+            distance_down_swim_max = int(swim_config['distance_down_swim_max'])
+            speed_down_swim = int(swim_config['speed_down_swim'])
+            limit_height_upper = int(swim_config['limit_height_upper'])
+            limit_height_lower = int(swim_config['limit_height_lower'])
+
             # Check if the next up movement would exceed the upper limit
-            if current_state['current_height'] + swim_config['distance_up_swim'] <= swim_config['limit_height_upper']:
-                move("up", swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+            if current_height + distance_up_swim <= limit_height_upper:
+                move("up", distance_up_swim, speed_up_swim)
             else:
                 print("Skipping up movement due to upper limit")
-
-            random_distance = random.randint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
+            random_distance = random.randint(distance_down_swim_min, distance_down_swim_max)
             # Check if the next down movement would exceed the lower limit
-            if current_state['current_height'] - random_distance >= swim_config['limit_height_lower']:
+            if int(current_state['current_height']) - int(random_distance) >= limit_height_lower:
                 print(f"Random down distance: {random_distance}")
-                move("down", random_distance, swim_config['speed_down_swim'])
+                move("down", random_distance, speed_down_swim)
             else:
                 print("Skipping down movement due to lower limit")
     except KeyboardInterrupt:
