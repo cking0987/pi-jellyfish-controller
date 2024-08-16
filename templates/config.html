@@ -70,8 +70,11 @@
     </form>
     <h2>Move Motor</h2>
     <form>
-        <label for="direction">Direction:</label>
-        <input type="number" id="direction"><br>
+        <label for="direction">Direction:</label><br>
+        <input type="radio" id="direction_up" name="direction" value="up">
+        <label for="direction_up">Up</label><br>
+        <input type="radio" id="direction_down" name="direction" value="down">
+        <label for="direction_down">Down</label><br>
         <label for="distance">Distance:</label>
         <input type="number" id="distance"><br>
         <label for="speed">Speed:</label>
@@ -80,5 +83,7 @@
         <input type="checkbox" id="respect_limits"><br>
         <button type="button" onclick="moveMotor()">Move</button>
     </form>
+    <br /><br />
+    <a href="/">Home</a>
 </body>
 </html>
