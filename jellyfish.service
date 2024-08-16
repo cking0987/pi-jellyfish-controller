@@ -1,11 +1,11 @@
 [Unit]
-Description=Jellyfish motor Controller Service
+Description=Jellyfish web server
 After=multi-user.target
 
 [Service]
 Type=idle
 WorkingDirectory=/home/chuck/pi-jellyfish-controller
-ExecStart=/usr/bin/python3 /home/chuck/pi-jellyfish-controller/motor_controller.py
+ExecStart=/usr/bin/python3 /home/chuck/pi-jellyfish-controller/app.py
 Restart=always
 RestartSec=5
 User=root
