@@ -20,6 +20,8 @@ try:
         current_state = json.load(f)
 except FileNotFoundError:
     current_state = {'current_height': 0}
+    with open('current_state.json', 'w') as f:
+        json.dump(current_state, f)
 
 # Setup GPIO
 gpio.setmode(gpio.BCM)
