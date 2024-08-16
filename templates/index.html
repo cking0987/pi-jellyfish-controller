@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Motor Control</title>
+    <script>
+        function startSwim() {
+            fetch('/start_swim', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data));
+        }
+
+        function stopSwim() {
+            fetch('/stop_swim', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data));
+        }
+    </script>
+</head>
+<body>
+    <h1>Motor Control</h1>
+    <p>Hostname: {{ hostname }}</p>
+    <p>Current Height: {{ current_height }}</p>
+    <button onclick="startSwim()">Start Swim</button>
+    <button onclick="stopSwim()">Stop Swim</button>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Motor Configuration</title>
+    <script>
+        function setConfig() {
+            const config = {
+                limit_height_upper: document.getElementById('limit_height_upper').value,
+                limit_height_lower: document.getElementById('limit_height_lower').value,
+                speed_up_swim: document.getElementById('speed_up_swim').value,
+                speed_up_manual: document.getElementById('speed_up_manual').value,
+                speed_down_swim: document.getElementById('speed_down_swim').value,
+                speed_down_manual: document.getElementById('speed_down_manual').value,
+                distance_up_swim: document.getElementById('distance_up_swim').value,
+                distance_down_swim_min: document.getElementById('distance_down_swim_min').value,
+                distance_down_swim_max: document.getElementById('distance_down_swim_max').value
+            };
+
+            fetch('/set_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(data => console.log(data));
+        }
+
+        function moveMotor() {
+            const moveParams = {
+                direction: document.getElementById('direction').value,
+                distance: document.getElementById('distance').value,
+                speed: document.getElementById('speed').value,
+                respect_limits: document.getElementById('respect_limits').checked
+            };
+
+            fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(moveParams)
+            })
+            .then(response => response.json())
+            .then(data => console.log(data));
+        }
+    </script>
+</head>
+<body>
+    <h1>Motor Configuration</h1>
+    <p>Hostname: {{ hostname }}</p>
+    <form>
+        <label for="limit_height_upper">Limit Height Upper:</label>
+        <input type="number" id="limit_height_upper" value="{{ swim_config.limit_height_upper }}"><br>
+        <label for="limit_height_lower">Limit Height Lower:</label>
+        <input type="number" id="limit_height_lower" value="{{ swim_config.limit_height_lower }}"><br>
+        <label for="speed_up_swim">Speed Up Swim:</label>
+        <input type="number" id="speed_up_swim" value="{{ swim_config.speed_up_swim }}"><br>
+        <label for="speed_up_manual">Speed Up Manual:</label>
+        <input type="number" id="speed_up_manual" value="{{ swim_config.speed_up_manual }}"><br>
+        <label for="speed_down_swim">Speed Down Swim:</label>
+        <input type="number" id="speed_down_swim" value="{{ swim_config.speed_down_swim }}"><br>
+        <label for="speed_down_manual">Speed Down Manual:</label>
+        <input type="number" id="speed_down_manual" value="{{ swim_config.speed_down_manual }}"><br>
+        <label for="distance_up_swim">Distance Up Swim:</label>
+        <input type="number" id="distance_up_swim" value="{{ swim_config.distance_up_swim }}"><br>
+        <label for="distance_down_swim_min">Distance Down Swim Min:</label>
+        <input type="number" id="distance_down_swim_min" value="{{ swim_config.distance_down_swim_min }}"><br>
+        <label for="distance_down_swim_max">Distance Down Swim Max:</label>
+        <input type="number" id="distance_down_swim_max" value="{{ swim_config.distance_down_swim_max }}"><br>
+        <button type="button" onclick="setConfig()">Set Config</button>
+    </form>
+    <h2>Move Motor</h2>
+    <form>
+        <label for="direction">Direction:</label>
+        <input type="number" id="direction"><br>
+        <label for="distance">Distance:</label>
+        <input type="number" id="distance"><br>
+        <label for="speed">Speed:</label>
+        <input type="number" id="speed"><br>
+        <label for="respect_limits">Respect Limits:</label>
+        <input type="checkbox" id="respect_limits"><br>
+        <button type="button" onclick="moveMotor()">Move</button>
+    </form>
+</body>
+</html>
