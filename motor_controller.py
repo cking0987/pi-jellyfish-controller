@@ -62,10 +62,19 @@ def set_limit(option, value):
 
 def start_swim():
     print("Starting swim")
-    move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+    # Check if the next up movement would exceed the upper limit
+    if current_state['current_height'] + swim_config['distance_up_swim'] <= swim_config['limit_height_upper']:
+        move(motor_config['cw_direction'], swim_config['distance_up_swim'], swim_config['speed_up_swim'])
+    else:
+        print("Skipping up movement due to upper limit")
+
     random_distance = random.randint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
-    print(f"Random down distance: {random_distance}")
-    move(motor_config['ccw_direction'], random_distance, swim_config['speed_down_swim'])
+    # Check if the next down movement would exceed the lower limit
+    if current_state['current_height'] - random_distance >= swim_config['limit_height_lower']:
+        print(f"Random down distance: {random_distance}")
+        move(motor_config['ccw_direction'], random_distance, swim_config['speed_down_swim'])
+    else:
+        print("Skipping down movement due to lower limit")
 
 def stop_swim():
     print("Stopping swim and cleaning up GPIO")
