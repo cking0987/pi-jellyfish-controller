@@ -6,13 +6,13 @@
     <script>
         function setConfig() {
             const config = {
-                limit_height_upper: document.getElementById('limit_height_upper').value,
-                limit_height_lower: document.getElementById('limit_height_lower').value,
-                speed_up_swim: document.getElementById('speed_up_swim').value,
-                speed_down_swim: document.getElementById('speed_down_swim').value,
-                distance_up_swim: document.getElementById('distance_up_swim').value,
-                distance_down_swim_min: document.getElementById('distance_down_swim_min').value,
-                distance_down_swim_max: document.getElementById('distance_down_swim_max').value
+                'limit_height_upper': document.getElementById('limit_height_upper').value,
+                'limit_height_lower': document.getElementById('limit_height_lower').value,
+                'speed_up_swim': document.getElementById('speed_up_swim').value,
+                'speed_down_swim': document.getElementById('speed_down_swim').value,
+                'distance_up_swim': document.getElementById('distance_up_swim').value,
+                'distance_down_swim_min': document.getElementById('distance_down_swim_min').value,
+                'distance_down_swim_max': document.getElementById('distance_down_swim_max').value
             };
 
             fetch('/set_config', {
