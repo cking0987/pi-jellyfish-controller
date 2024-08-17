@@ -27,10 +27,13 @@ def config():
     return render_template('config.html', swim_config=swim_config, hostname=hostname)
 
 @app.route('/set_config', methods=['POST'])
+# Function to save current config settings
 def set_config():
     data = request.json
-    for key, value in data.items():
-        set_limit(key, value)
+    with open('swim_config.json', 'w') as f:
+        json.dump(data, f)
+    global swim_config
+    swim_config = data
     return jsonify(success=True)
 
 @app.route('/move', methods=['POST'])

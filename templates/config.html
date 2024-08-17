@@ -9,9 +9,7 @@
                 limit_height_upper: document.getElementById('limit_height_upper').value,
                 limit_height_lower: document.getElementById('limit_height_lower').value,
                 speed_up_swim: document.getElementById('speed_up_swim').value,
-                speed_up_manual: document.getElementById('speed_up_manual').value,
                 speed_down_swim: document.getElementById('speed_down_swim').value,
-                speed_down_manual: document.getElementById('speed_down_manual').value,
                 distance_up_swim: document.getElementById('distance_up_swim').value,
                 distance_down_swim_min: document.getElementById('distance_down_swim_min').value,
                 distance_down_swim_max: document.getElementById('distance_down_swim_max').value
@@ -28,19 +26,16 @@
 
         function moveMotor() {
             const moveParams = {
-                direction: document.getElementById('direction').value,
+                direction:  document.querySelector('input[name="direction"]:checked').value,
                 distance: document.getElementById('distance').value,
                 speed: document.getElementById('speed').value,
                 respect_limits: document.getElementById('respect_limits').checked
             };
-
             fetch('/move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(moveParams)
             })
-            .then(response => response.json())
-            .then(data => console.log(data));
         }
     </script>
 </head>
@@ -54,12 +49,8 @@
         <input type="number" id="limit_height_lower" value="{{ swim_config.limit_height_lower }}"><br>
         <label for="speed_up_swim">Speed Up Swim:</label>
         <input type="number" id="speed_up_swim" value="{{ swim_config.speed_up_swim }}"><br>
-        <label for="speed_up_manual">Speed Up Manual:</label>
-        <input type="number" id="speed_up_manual" value="{{ swim_config.speed_up_manual }}"><br>
         <label for="speed_down_swim">Speed Down Swim:</label>
         <input type="number" id="speed_down_swim" value="{{ swim_config.speed_down_swim }}"><br>
-        <label for="speed_down_manual">Speed Down Manual:</label>
-        <input type="number" id="speed_down_manual" value="{{ swim_config.speed_down_manual }}"><br>
         <label for="distance_up_swim">Distance Up Swim:</label>
         <input type="number" id="distance_up_swim" value="{{ swim_config.distance_up_swim }}"><br>
         <label for="distance_down_swim_min">Distance Down Swim Min:</label>
