@@ -52,7 +52,7 @@ def move(direction, distance, speed, respect_limits=True):
     print(f"Moving {direction} (type: {type(direction)}) for {distance} units (type: {type(distance)}) at speed {speed} (type: {type(speed)})")
     
     # Check if movement should respect limits
-    if respect_limits:
+    if (respect_limits == True):
         # Adjust distance if moving up and exceeding upper limit
         if direction == "up" and height + distance > max:
             distance = max - height
