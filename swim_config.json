@@ -1,10 +1,9 @@
 {
 	"limit_height_upper": 25,
 	"limit_height_lower": 0,
-	"speed_up_swim": 800,
-	"speed_down_swim": 400,
-	"distance_up_swim": 3,
+	"speed_up_swim": 3000,
+	"speed_down_swim": 1000,
+	"distance_up_swim": 4,
 	"distance_down_swim_min": 1,
-	"distance_down_swim_max": 5,
-	"swim_on_boot": false
+	"distance_down_swim_max": 10
 }
