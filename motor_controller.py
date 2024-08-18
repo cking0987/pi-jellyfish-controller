@@ -160,12 +160,12 @@ def start_swim():
 
     try:
         while True:
-            move("up", swim_config['distance_up_swim'], swim_config['speed_up_swim'], True)
+            move("up", int(swim_config['distance_up_swim']), int(swim_config['speed_up_swim']), True)
             
             # set a random distance for the down movement
-            random_distance = random.randint(swim_config['distance_down_swim_min'], swim_config['distance_down_swim_max'])
+            random_distance = random.randint(int(swim_config['distance_down_swim_min']), int(swim_config['distance_down_swim_max']))
 
-            move("down", random_distance, swim_config['speed_down_swim'], True)
+            move("down", random_distance, int(swim_config['speed_down_swim']), True)
     except KeyboardInterrupt:
         stop_swim()
 
