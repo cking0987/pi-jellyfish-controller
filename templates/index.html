@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Motor Control</title>
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
     <script>
         function startSwim() {
             fetch('/start_swim', { method: 'POST' })
@@ -15,15 +16,32 @@
                 .then(response => response.json())
                 .then(data => console.log(data));
         }
+        $(document).ready(function() {
+            function fetchMotorData() {
+                $.ajax({
+                    url: '/get_motor_status',
+                    type: 'GET',
+                    success: function(data) {
+                        $('#currentHeight').text(data.currentHeight);
+                    },
+                    error: function() {
+                        alert("Error fetching motor data.");
+                    }
+                });
+            }
+             // Bind the new function to the click event of the button
+            $("#fetchMotorData").click(fetchMotorData);
+        });
     </script>
 </head>
 <body>
     <h1>Motor Control</h1>
     <p>Hostname: {{ hostname }}</p>
-    <p>Current Height: {{ current_height }}</p>
+    <p>Current Height: <span id="currentHeight">{{ current_height }}</span></p>
     <button onclick="startSwim()">Start Swim</button>
     <button onclick="stopSwim()">Stop Swim</button>
     <br /><br />
+    <button id="fetchMotorData">Fetch Motor Data</button><br />
     <a href="/config">Config</a>
 </body>
 </html>

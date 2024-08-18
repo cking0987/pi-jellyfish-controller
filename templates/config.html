@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Motor Configuration</title>
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
     <script>
         function setConfig() {
             const config = {
@@ -37,11 +38,32 @@
                 body: JSON.stringify(moveParams)
             })
         }
+
+        $(document).ready(function() {
+            function fetchMotorData() {
+                $.ajax({
+                    url: '/get_motor_status',
+                    type: 'GET',
+                    success: function(data) {
+                        $('#currentHeight').text(data.currentHeight);
+                    },
+                    error: function() {
+                        alert("Error fetching motor data.");
+                    }
+                });
+            }
+             // Bind the new function to the click event of the button
+            $("#fetchMotorData").click(fetchMotorData);
+        });
+       
     </script>
 </head>
 <body>
     <h1>Motor Configuration</h1>
     <p>Hostname: {{ hostname }}</p>
+    <p>Current Height: <span id="currentHeight">{{ current_height }}</span></p>
+    <button id="fetchMotorData">Fetch Motor Data</button>
+    <br /><br />
     <form>
         <label for="limit_height_upper">Limit Height Upper:</label>
         <input type="number" id="limit_height_upper" value="{{ swim_config.limit_height_upper }}"><br>

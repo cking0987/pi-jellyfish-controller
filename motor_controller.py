@@ -47,10 +47,11 @@ load_swim_config()
 
 # function to load current state from current_state.json
 def load_current_state():
-    global current_state
     try:
         with open('current_state.json', 'r') as f:
+            global current_state
             current_state = json.load(f)
+            print(f"current_state updated from disk and is now {current_state}")
     except FileNotFoundError:
         current_state = {'current_height': 0}
         with open('current_state.json', 'w') as f:
@@ -82,6 +83,13 @@ def update_height(direction, distance):
         print(f"current_state['current_height'] is now {current_state['current_height']}")
     save_current_state() # save new height to disk
 
+# function to get motor status
+def get_motor_status():
+    load_current_state()
+    print(f"from motor_controller: current_state is {current_state}")
+    return {
+        "currentHeight": current_state['current_height']
+    }
 
 # function to control motor movement
 def move(direction, distance, speed, respect_limits=True):
