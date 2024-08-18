@@ -1,0 +1,43 @@
+/* General styles */
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 20px;
+	background-color: #f4f4f4;
+}
+
+/* Button styles */
+button {
+	display: inline-block;
+	padding: 10px 20px;
+	margin: 10px 0;
+	font-size: 16px;
+	color: #fff;
+	background-color: #007bff;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	transition: background-color 0.3s ease;
+}
+
+button.secondary {
+	background-color: #6c757d;
+}
+
+button:hover {
+	background-color: #0056b3;
+}
+hr {
+	margin: 20px 0;
+	border: 1px solid #ccc;
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 600px) {
+	button {
+			width: 100%;
+			font-size: 18px;
+	}
+}

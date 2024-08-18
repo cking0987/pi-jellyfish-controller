@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Motor Configuration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
     <script>
         function setConfig() {
@@ -62,9 +63,11 @@
 <body>
     <h1>Motor Configuration</h1>
     <p>Hostname: {{ hostname }}</p>
+    <hr />
     <p>Current Height: <span id="currentHeight">{{ current_height }}</span></p>
-    <button id="fetchMotorData">Fetch Motor Data</button>
-    <br /><br />
+    <button id="fetchMotorData">Fetch current height</button>
+    <hr />
+    <h2>Swim config</h2>
     <form>
         <label for="limit_height_upper">Limit Height Upper:</label>
         <input type="number" id="limit_height_upper" value="{{ swim_config.limit_height_upper }}"><br>
@@ -82,22 +85,27 @@
         <input type="number" id="distance_down_swim_max" value="{{ swim_config.distance_down_swim_max }}"><br>
         <button type="button" onclick="setConfig()">Set Config</button>
     </form>
-    <h2>Move Motor</h2>
+    <hr />
+    <h2>Move motor manually</h2>
     <form>
         <label for="direction">Direction:</label><br>
         <input type="radio" id="direction_up" name="direction" value="up">
         <label for="direction_up">Up</label><br>
         <input type="radio" id="direction_down" name="direction" value="down">
         <label for="direction_down">Down</label><br>
+
         <label for="distance">Distance:</label>
-        <input type="number" id="distance"><br>
+        <input type="number" id="distance" value="{{ swim_config.distance_up_swim }}"><br>
+
         <label for="speed">Speed:</label>
-        <input type="number" id="speed"><br>
+        <input type="number" id="speed" value="{{ swim_config.speed_up_swim }}"><br>
+
         <label for="respect_limits">Respect Limits:</label>
-        <input type="checkbox" id="respect_limits"><br>
+        <input type="checkbox" id="respect_limits" checked><br>
+
         <button type="button" onclick="moveMotor()">Move</button>
     </form>
-    <br /><br />
+    <hr />
     <a href="/">Home</a>
 </body>
 </html>
