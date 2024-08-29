@@ -1,13 +1,14 @@
 [Unit]
-Description=Jellyfish Web Interface Flask App
-After=network.target
+Description=Jellyfish web server
+After=multi-user.target
 
 [Service]
-User=root
+Type=idle
 WorkingDirectory=/home/chuck/pi-jellyfish-controller
-ExecStart=/usr/bin/python3 /home/chuck/pi-jellyfish-controller/web_server.py
+ExecStart=/usr/bin/python3 /home/chuck/pi-jellyfish-controller/app.py
 Restart=always
 RestartSec=5
+User=root
 
 [Install]
 WantedBy=multi-user.target

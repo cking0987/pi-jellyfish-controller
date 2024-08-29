@@ -1,0 +1,8 @@
+{
+	"direction_pin": 23,
+	"pulse_pin": 24,
+	"motor_direction_up": 0,
+	"motor_direction_down": 1,
+	"pulses_per_rotation": 200,
+	"pulse_duration": 0.001
+}

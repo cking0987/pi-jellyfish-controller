@@ -1,153 +1,184 @@
-# motor_controller.py
-import RPi.GPIO as GPIO
-import atexit
-import threading
-from time import sleep
 import json
-import os
-import logging
+import random
+import RPi.GPIO as gpio
+from time import sleep
 
-# Setup logging
-logging.basicConfig(filename='log.log', level=logging.DEBUG, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+# Disable GPIO warnings
+gpio.setwarnings(False)
 
-# File to store persistent data
-DATA_FILE = 'motor_data.json'
+# function to load motor parameters from motor_config.json
+def load_motor_config():
+    global motor_config
+    with open('motor_config.json', 'r') as f:
+        motor_config = json.load(f)
 
-# Load persistent data
-def load_data():
-    global current_height, max_height, min_height
-    if os.path.exists(DATA_FILE):
-        logging.debug("Loading data from %s", DATA_FILE)
-        with open(DATA_FILE, 'r') as file:
-            data = json.load(file)
-            current_height[0] = data.get('current_height', 0)
-            max_height = data.get('max_height', 50)
-            min_height = data.get('min_height', 0)
-        logging.debug("Data loaded: %s", data)
-    else:
-        logging.debug("%s does not exist. Using default values.", DATA_FILE)
+# set default motor parameters
+motor_config = {
+	"direction_pin": 23,
+	"pulse_pin": 24,
+	"motor_direction_up": 0,
+	"motor_direction_down": 1,
+	"pulses_per_rotation": 200,
+	"pulse_duration": 0.001
+}
 
-# Save persistent data
-def save_data():
-    data = {
-        'current_height': current_height[0],
-        'max_height': max_height,
-        'min_height': min_height
-    }
-    logging.debug("Saving data to %s: %s", DATA_FILE, data)
-    with open(DATA_FILE, 'w') as file:
-        json.dump(data, file)
+# update motor parameters from disk storage
+load_motor_config()
 
-# instance-specific GPIO settings
-direction_pin = 20
-pulse_pin = 21
-cw_direction = 0  # Clockwise (Up)
-ccw_direction = 1  # Counter-Clockwise (Down)
+# function to load swim parameters from swim_config.json
+def load_swim_config():
+    global swim_config
+    with open('swim_config.json', 'r') as f:
+        swim_config = json.load(f)
 
-# motor parameters
-pulses_per_rotation = 200
-pulse_duration = .001
+# set default swim parameters
+swim_config = {
+    "limit_height_upper": 25,
+    "limit_height_lower": 0,
+    "speed_up_swim": 800,
+    "speed_down_swim": 400,
+    "distance_up_swim": 3,
+    "distance_down_swim_min": 1,
+    "distance_down_swim_max": 5
+}
 
-# starting values for limits, speed, and position
-max_height = 50
-min_height = 0
-natural_speed_up_rpm = 100
-natural_speed_down_rpm = 60
-speed_rpm = 50
-current_height = [0]
+# update swim parameters from disk storage
+load_swim_config()
 
-# If there is motor data available on disk, load that to update the variables
-load_data()
-
-# Movement control
-manual_thread = None
-stop_event = threading.Event()
-
-# safer way to set up GPIO pins
-def safe_gpio_setup(pin, mode):
+# function to load current state from current_state.json
+def load_current_state():
     try:
-        GPIO.setup(pin, mode)
-    except RuntimeError as e:
-        logging.error(f"Warning: {e} - Attempting to continue")
-        GPIO.cleanup()  # Attempt a cleanup
-        GPIO.setup(pin, mode)  # Try to setup again after cleanup
+        with open('current_state.json', 'r') as f:
+            global current_state
+            current_state = json.load(f)
+            print(f"current_state updated from disk and is now {current_state}")
+    except FileNotFoundError:
+        current_state = {'current_height': 0}
+        with open('current_state.json', 'w') as f:
+            json.dump(current_state, f)
 
-# Initialize GPIO
-GPIO.setmode(GPIO.BCM)
-safe_gpio_setup(direction_pin, GPIO.OUT)
-safe_gpio_setup(pulse_pin, GPIO.OUT)
+# set default current state
+current_state = {
+    "current_height": 0
+}
 
-def move_motor(direction, speed_rpm, ignore_limits=False):
-    global current_height
-    pulse_gap = (60 / (speed_rpm * pulses_per_rotation)) - pulse_duration
+# update current state from disk storage
+load_current_state()
 
-    GPIO.output(direction_pin, direction)
-    while not stop_event.is_set():
-        for _ in range(pulses_per_rotation):  # Complete one full rotation
-            if stop_event.is_set():
-                break
-            GPIO.output(pulse_pin, GPIO.HIGH)
-            sleep(pulse_duration)
-            GPIO.output(pulse_pin, GPIO.LOW)
-            sleep(pulse_gap)
+# function to save current state to disk
+def save_current_state():
+    with open('current_state.json', 'w') as f:
+        json.dump(current_state, f)
 
-        # Update current_height based on direction
-        if direction == cw_direction:
-            current_height[0] += 1  # Increase by one full rotation
-        else:
-            current_height[0] -= 1  # Decrease by one full rotation
+# function to update the current height
+def update_height(direction, distance):
+    global current_state
+    if direction == "up":
+        print(f"Up movement means changing value of current_height from {current_state['current_height']} to {current_state['current_height'] + distance}")
+        current_state['current_height'] += distance
+        print(f"current_state['current_height'] is now {current_state['current_height']}")
+    else:
+        print(f"Down movement means changing value of current_height from {current_state['current_height']} to {current_state['current_height'] - distance}")
+        current_state['current_height'] -= distance
+        print(f"current_state['current_height'] is now {current_state['current_height']}")
+    save_current_state() # save new height to disk
 
-        # Stop motor at limits
-        if not ignore_limits and (current_height[0] >= max_height or current_height[0] <= min_height):
-            stop_event.set()  # Stop the motor if limits are reached
-
-        # Save data after each movement
-        save_data()
-
-
-def manual_up(speed_rpm, ignore_limits):
-    global manual_thread
-    stop_event.clear()  # Clear stop event in case it was set
-    if manual_thread and manual_thread.is_alive():
-        return  # Return if a movement is already in progress
-    manual_thread = threading.Thread(target=move_motor, args=(cw_direction, speed_rpm, ignore_limits))
-    manual_thread.start()
-
-def manual_down(speed_rpm, ignore_limits):
-    global manual_thread
-    stop_event.clear()
-    if manual_thread and manual_thread.is_alive():
-        return
-    manual_thread = threading.Thread(target=move_motor, args=(ccw_direction, speed_rpm, ignore_limits))
-    manual_thread.start()
-
-def set_upper_limit():
-    global max_height, current_height
-    max_height = current_height[0]
-    save_data() # save updated values to disk
-
-def set_lower_limit():
-    global min_height, current_height
-    min_height = current_height[0]
-    save_data() # save updated values to disk
-
+# function to get motor status
 def get_motor_status():
+    load_current_state()
+    print(f"from motor_controller: current_state is {current_state}")
     return {
-        "minHeight": min_height,
-        "maxHeight": max_height,
-        "naturalSpeedUp": natural_speed_up_rpm,
-        "naturalSpeedDown": natural_speed_down_rpm,
-        "currentHeight": current_height[0],
+        "currentHeight": current_state['current_height']
     }
 
-def stop():
-    stop_event.set()
-    if manual_thread:
-        manual_thread.join()
+# function to control motor movement
+def move(direction, distance, speed, respect_limits=True):
 
-def cleanup():
-    logging.debug("Running cleanup")
-    GPIO.cleanup()
+    # run these two functions before each movement in case the values on disk have changed
+    load_swim_config()
+    load_current_state()
 
-atexit.register(cleanup)
+    print(f"{swim_config}")
+
+    # set GPIO mode
+    gpio.setmode(gpio.BCM)
+
+    # set up GPIO pins
+    gpio.setup(motor_config['direction_pin'], gpio.OUT)
+    gpio.setup(motor_config['pulse_pin'], gpio.OUT)
+    
+    # convert human-readable parameter strings to GPIO values
+    if direction == "up":
+        direction_value = motor_config['motor_direction_up']
+    elif direction == "down":
+        direction_value = motor_config['motor_direction_down']
+    else:
+        raise ValueError("Invalid direction value. Use 'up' or 'down'.")
+
+    # Set the motor direction
+    gpio.output(motor_config['direction_pin'], direction_value)
+
+    # convert values from disk storage to integers so we don't get calc errors
+    height = int(current_state['current_height'])
+    max = int(swim_config['limit_height_upper'])
+    min = int(swim_config['limit_height_lower'])
+
+    # Print the movement plan
+    print(f"Planning to move {direction} (type: {type(direction)}) for {distance} units (type: {type(distance)}) at speed {speed} (type: {type(speed)})")
+
+    # Check if movement should respect limits
+    if (respect_limits == True):
+        print(f"respect limits is enabled")
+        # Adjust distance if moving up and exceeding upper limit
+        if direction == "up" and height + distance > max:
+            print(f"up distance ({distance} is too much.")
+            distance = max - height
+            print(f"up distance reduced to {distance}")
+        # Adjust distance if moving down and exceeding lower limit
+        elif direction == "down" and height - distance < min:
+            print(f"down distance ({distance} is too much.")
+            distance = height - min
+            print(f"down distance reduced to {distance}")
+    else:
+        print(f"respect limits is disabled")
+
+    # Generate pulses to move the motor
+    for _ in range(distance * motor_config['pulses_per_rotation']):
+        gpio.output(motor_config['pulse_pin'], gpio.HIGH)  # Set pulse pin high
+        sleep(1 / speed)  # Wait for the duration inversely proportional to speed
+        gpio.output(motor_config['pulse_pin'], gpio.LOW)  # Set pulse pin low
+        sleep(1 / speed)  # Wait again for the duration inversely proportional to speed
+    
+    # Update the current height based on the direction of movement
+    update_height(direction, distance)
+
+def start_swim():
+    print("Starting swim")
+    
+    # always check disk to see if things have changed
+    load_swim_config()
+
+    try:
+        while True:
+            move("up", int(swim_config['distance_up_swim']), int(swim_config['speed_up_swim']), True)
+            
+            # set a random distance for the down movement
+            random_distance = random.randint(int(swim_config['distance_down_swim_min']), int(swim_config['distance_down_swim_max']))
+
+            move("down", random_distance, int(swim_config['speed_down_swim']), True)
+    except KeyboardInterrupt:
+        stop_swim()
+
+def stop_swim():
+    print("Stopping swim and cleaning up GPIO")
+    gpio.cleanup()
+
+# Main section
+#if __name__ == "__main__":
+#    try:
+#        if swim_config.get('swim_on_boot', False):
+#            start_swim()
+#        else:
+#            print("Swim on boot is disabled.")
+#    except KeyboardInterrupt:
+#        stop_swim()
